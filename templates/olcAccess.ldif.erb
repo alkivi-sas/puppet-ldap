@@ -1,0 +1,7 @@
+dn: olcDatabase={1}hdb,cn=config
+changetype: modify
+add: olcAccess
+olcAccess: {1}to attrs=loginShell,gecos
+  by dn="cn=admin,<%= @base %>" write
+  by self write
+  by * read

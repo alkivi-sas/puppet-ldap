@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -e
+
+#
+#   Display help
+#
+help()
+{
+    cat <<EOF
+    $PROGNAME : [OPTIONS]
+    --command Set command (add or modify)
+    --method  Set connexion type (ldapi or auth)
+    --file    Set file
+
+EOF
+}
+
+ID=`id -u`
+if [ "$ID" -ne "0" ]; then
+    echo "Script must be run as root"
+    exit 2
+fi
+
+# Parse command line
+while [ "$#" -gt 0 ] ; do
+    case $1 in
+        --help)
+            help
+            exit 0
+            ;;
+        --command)
+            COMMAND=$2
+            shift
+            ;;
+        --method)
+            METHOD=$2
+            shift   
+            ;;
+        --args)
+            ARGS=$2
+            shift
+            ;;
+        --file)
+            FILE=$2
+            shift
+            ;;
+        *)
+            echo "Unknown option '$1'"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# Check arguments
+if [ "$COMMAND" == 'add' ]; then
+    FINALCOMMAND="ldapadd"
+elif [ "$COMMAND" == 'modify' ]; then
+    FINALCOMMAND="ldapmodify"
+elif [ "$COMMAND" == 'search' ]; then
+    FINALCOMMAND="ldapsearch"
+elif [ -z "$COMMAND" ]; then
+    echo "You have to pass a command"
+    help
+    exit 1
+else
+    echo "Wrong command passed : $COMMAND. Should be add, search or modify"
+    exit 2
+fi
+
+if [ "$METHOD" == 'ldapi' ]; then
+    AUTH="-Y EXTERNAL -H ldapi://"
+elif [ "$METHOD" == 'auth' ]; then
+    # Need to extract hostname
+    BASE=`grep BASE /etc/ldap/ldap.conf | sed -e 's/BASE//' | tr -d ' '`
+    AUTH="-D cn=admin,$BASE -w `cat /root/.passwd/ldap/admin`"
+elif [ -z "$METHOD" ]; then
+    echo "You have to pass a method"
+    help
+    exit 1
+else
+    echo "Wrong method passed"
+    exit 2
+fi
+
+if [ -z "$FILE" ]; then
+    if [ ! -z "$ARGS" ]; then
+        $FINALCOMMAND $AUTH $ARGS
+        exit 0
+    else
+        echo "No file passed as parameter"
+        help
+        exit 1
+    fi
+elif [ ! -e "$FILE" ]; then
+    echo "File $FILE does not exist"
+    exit 1
+else
+    $FINALCOMMAND $AUTH -f $FILE > /dev/null
+    exit 0
+fi

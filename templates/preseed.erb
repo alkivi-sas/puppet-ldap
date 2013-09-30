@@ -1,0 +1,11 @@
+slapd slapd/password1 string CHANGEME
+slapd slapd/password2 string CHANGEME
+slapd slapd/invalid_config boolean true
+slapd shared/organization string <%= @domain_name %>
+slapd slapd/backend string <%= @backend %>
+slapd slapd/allow_ldap_v2 boolean false
+slapd slapd/no_configuration boolean false
+slapd slapd/move_old_database boolean true
+slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION
+slapd slapd/purge_database boolean true
+slapd slapd/domain string <%= @domain_name %>

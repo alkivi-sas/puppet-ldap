@@ -1,0 +1,22 @@
+dn: olcDatabase={1}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: memberUid eq
+-
+add: olcDbIndex
+olcDbIndex: uniqueMember eq
+-
+add: olcDbIndex
+olcDbIndex: sambaSID eq
+-
+add: olcDbIndex
+olcDbIndex: sambaPrimaryGroupSID eq
+-
+add: olcDbIndex
+olcDbIndex: sambaDomainName eq
+-
+add: olcDbIndex
+olcDbIndex: sambaGroupType eq
+-
+add: olcDbIndex
+olcDbIndex: sambaSIDList eq

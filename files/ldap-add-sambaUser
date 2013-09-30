@@ -1,0 +1,66 @@
+#!/bin/bash
+
+set -e
+
+#
+#   Display help
+#
+function Usage {
+    echo "Usage: $0 -f FirstName -l LastName [-m email -u username -i userid -g group -p password -c] (-c create a local user)"
+    exit 1
+}
+
+
+ID=`id -u`
+if [ "$ID" -ne "0" ]; then
+    echo "Script must be run as root"
+    exit 2
+fi
+
+while getopts f:g:i:l:i:p:u:m:hc OPTION
+do
+    case $OPTION in
+        f) FirstName=$OPTARG;;
+        i) UserID=$OPTARG;;
+        l) LastName=$OPTARG;;
+        u) UserName=$OPTARG;;
+        m) Mail=$OPTARG;;
+        c) CREATE="yes";;
+        h) Usage;;
+    esac
+done
+
+# Build arguments default : create samba account
+ARGS="-a"
+if [ -n $FirstName ]; then
+    ARGS="$ARGS -N $FirstName"
+fi
+
+if [ -n $LastName ]; then
+    ARGS="$ARGS -S $LastName"
+fi
+
+if [ -n $Mail ]; then
+    ARGS="$ARGS -M $Mail"
+fi
+
+if [ -z $UserName ]; then
+    echo "No -u username specified, die"
+    exit 1
+fi
+
+if [ -n $CREATE ]; then
+    ARGS="$ARGS -m"
+fi
+
+# Call the command with good arguments
+/usr/sbin/smbldap-useradd $ARGS $UserName
+
+# Generate password
+PASSWORD=`genpwd --save $UserName --savedir /root/.passwd/ldap/ --print`
+
+# Update password
+/usr/sbin/smbldap-passwd $UserName <<EOF
+$PASSWORD
+$PASSWORD
+EOF

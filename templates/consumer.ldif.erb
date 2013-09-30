@@ -1,0 +1,17 @@
+#Load the syncprov module.
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: syncprov
+
+# syncrepl specific indices
+dn: olcDatabase={1}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+-
+add: olcSyncRepl
+olcSyncRepl: rid=001 provider=ldap://<%= @masterNode %> bindmethod=simple binddn="cn=synchronisator,<%= @base %>" credentials=password searchbase="<%= @base %>" logbase="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" schemachecking=on type=refreshAndPersist retry="60 +" syncdata=accesslog
+-
+add: olcUpdateRef
+olcUpdateRef: ldap://<%= @masterNode %>

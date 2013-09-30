@@ -1,0 +1,141 @@
+#!/bin/bash
+
+set -e
+
+
+#
+#   Display help
+#
+function Usage {
+    echo "Usage: $0 -f FirstName -l LastName [-m email -u username -i userid -g group -p password -c] (-c create a local user)"
+    exit 1
+}
+
+
+ID=`id -u`
+if [ "$ID" -ne "0" ]; then
+    echo "Script must be run as root"
+    exit 2
+fi
+
+# helper
+#dn: cn=Anthony Martinet,ou=people,dc=ores
+#cn: Anthony Martinet
+#gidnumber: 20000
+#givenname: Anthony
+#homedirectory: /home/users/amartinet
+#loginshell: /bin/sh
+#mail: anthony@alkivi.fr
+#objectclass: inetOrgPerson
+#objectclass: posixAccount
+#objectclass: top
+#sn: Martinet
+#uid: amartinet
+#uidnumber: 1000
+#userpassword: {MD5}9x2+UmKKP4OnerSUgXUlxg==
+
+BASEDC=`grep BASE /etc/ldap/ldap.conf | sed -e 's/BASE//' | tr -d ' '`
+SHELL=/bin/false
+Password=alkivi
+CREATE=""
+
+while getopts f:g:i:l:i:p:u:m:hc OPTION
+do
+    case $OPTION in
+        f) FirstName=$OPTARG;;
+        g) Group=$OPTARG;;
+        i) UserID=$OPTARG;;
+        l) LastName=$OPTARG;;
+        p) Password=$OPTARG;;
+        u) UserName=$OPTARG;;
+        m) Mail=$OPTARG;;
+        c) CREATE="yes";;
+        h) Usage;;
+    esac
+done
+
+#
+# Check variables
+#
+[[ -z "$FirstName" ]] && Usage
+[[ -z "$LastName" ]] && Usage
+
+if [[ -z "$UserID" ]]; then
+    LatestUID=`ldapsearch -x "objectclass=posixAccount" uidNumber | grep -v \^dn | grep -v \^\$ | sed -e 's/uidNumber: //g' | grep -E "^[0-9]{3,5}$" | sort -n | tail -n 1`
+    UserID=$((LatestUID + 1))
+fi
+
+if [[ -z "$Group" ]]; then
+    Group='users'
+fi
+if [[ -z "$UserName" ]]; then
+    FirstInitial=`echo $FirstName | cut -c1`
+    UserName=`echo "${FirstInitial}${LastName}" | tr "[:upper:]" "[:lower:]"`
+fi
+
+#
+# Check that ldap user does not exists
+#
+TEST=`ldapsearch -x "objectclass=posixAccount" uid | grep -v \^dn | grep -v \^\$ | sed -e 's/uid: //g' | grep -v \# | grep -v \: | grep ^$UserName$ ||:`
+if [[ "$TEST" == "$UserName" ]]; then
+    echo "User $UserName already exist, exiting"
+    exit 0 # exit 0 because action succeeded ? :)
+fi
+
+
+#
+# Check that group exists, 
+# TODO: if not create it ?
+#
+TEST=`ldapsearch -x  "objectclass=posixGroup" | grep ^dn: | sed -e 's/,.*//' | cut -d '=' -f2 |  grep ^$Group$ ||:`
+if [[ "$TEST" != "$Group" ]]; then
+    echo "Group $Group does not exist, maybe you wish to create it first ?"
+    exit 1
+fi
+
+GroupID=`ldapsearch -x "objectclass=posixGroup" -b "cn=$Group,ou=groups,$BASEDC" gidNumber | grep -v \^dn | grep -v \^\$ | sed -e 's/gidNumber: //g' | grep -E "^[0-9]{3,5}$"`
+
+#
+# Create ldif file
+# TODO crypt password ?
+#
+echo "dn: uid=$UserName, ou=people, $BASEDC" > /tmp/add.ldif
+echo "changetype: add" >> /tmp/add.ldif
+echo "cn: $FirstName $LastName" >> /tmp/add.ldif
+echo "gidNumber: $GroupID" >> /tmp/add.ldif
+echo "givenName: $FirstName $LastName" >> /tmp/add.ldif
+echo "homeDirectory: /home/$UserName" >> /tmp/add.ldif
+echo "loginShell: $SHELL" >> /tmp/add.ldif
+echo "mail:  $Mail" >> /tmp/add.ldif
+echo "objectClass: inetOrgPerson" >> /tmp/add.ldif
+echo "objectClass: posixAccount" >> /tmp/add.ldif
+echo "objectClass: top" >> /tmp/add.ldif
+echo "sn: $LastName" >> /tmp/add.ldif
+echo "uid: $UserName" >> /tmp/add.ldif
+echo "uidNumber: $UserID" >> /tmp/add.ldif
+echo "userPassword: $Password" >> /tmp/add.ldif
+
+
+
+#
+# Apply ldif file using ldap-help
+#
+/root/alkivi-scripts/ldap-helper --command add --method auth --file /tmp/add.ldif
+rm /tmp/add.ldif
+
+#
+# Create local user ?
+#
+
+# First test if already there
+if [[ $CREATE ]]; then
+    TEST=`cat /etc/passwd | sed -e 's/:.*//' | grep ^$UserName$ ||:`
+    if [[ "$TEST" == "$UserName" ]]; then
+        echo "Local user is already there, exiting"
+        exit 0
+    fi
+
+    /usr/sbin/useradd $UserName -u $UserID -N -g $Group -s $SHELL
+    rsync -ovaPx /etc/skel/ /home/$UserName
+    chown -cRv $UserName:$Group /home/$UserName
+fi

@@ -1,0 +1,36 @@
+dn: ou=people,<%= @base %>
+ou: people
+objectClass: organizationalUnit
+
+dn: ou=groups,<%= @base %>
+ou: groups 
+objectClass: organizationalUnit
+
+# Create default group : users and alkivi
+dn: cn=users,ou=groups,<%= @base %>
+cn: users 
+gidNumber: 100
+objectClass: top
+objectClass: posixGroup
+
+dn: cn=alkivi,ou=groups,<%= @base %>
+cn: alkivi
+gidNumber: 1000
+objectClass: top
+objectClass: posixGroup
+
+# Add default user : alkivi
+dn: uid=alkivi,ou=people,<%= @base %>
+cn: alkivi
+gidnumber: 1000
+givenname: Alkivi
+homedirectory: /home/alkivi
+loginshell: /bin/bash
+mail: contact@alkivi.fr
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Default User
+uid: alkivi
+uidnumber: 1000
+userpassword: alkivi

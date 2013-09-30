@@ -1,0 +1,6 @@
+dn: cn=config
+add: olcTLSCertificateFile
+olcTLSCertificateFile: <%= @ssldir %>/<%= @sslcert %>.crt
+-
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: <%= @ssldir %>/<%= @sslcert %>.key
