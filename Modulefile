@@ -1,5 +1,5 @@
 name    'alkivi-ldap'
-version '0.0.2'
+version '0.0.3'
 source 'https://github.com/alkivi-sas/puppet-ldap'
 author 'alkivi'
 license 'LGPLv3'
