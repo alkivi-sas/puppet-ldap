@@ -171,4 +171,15 @@ class ldap::config () {
       require => File['/etc/ldap/alkivi-conf'],
     }
   }
+
+  if defined(Class['rsyslog'])
+  {
+    concat::fragment{'rsyslog.ldap':
+      target  => $rsyslog::params::rsyslog_config_name,
+      content => "# LDAP\nlocal4.*                        /var/log/ldap.log\n",
+      order   => 02,
+    }
+  }
+
+    
 }
