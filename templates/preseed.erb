@@ -1,5 +1,5 @@
-slapd slapd/password1 string CHANGEME
-slapd slapd/password2 string CHANGEME
+slapd slapd/password1 string <%= @password %>
+slapd slapd/password2 string <%= @password %>
 slapd slapd/invalid_config boolean true
 slapd shared/organization string <%= @domain_name %>
 slapd slapd/backend string <%= @backend %>

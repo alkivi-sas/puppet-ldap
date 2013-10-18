@@ -13,7 +13,9 @@ class ldap::install () {
     }
   }
 
-  file { "/root/preseed/slapd.preseed.temp":
+  $password = alkivi_password('admin', 'ldap')
+
+  file { "/root/preseed/slapd.preseed":
     content => template('ldap/preseed.erb'),
     mode    => 600,
     backup  => false,
@@ -23,20 +25,11 @@ class ldap::install () {
   # Generate root password
   alkivi_base::passwd { 'admin':
     type   => 'ldap',
-    before => Exec['/root/preseed/slapd.preseed'],
-  }
-
-  exec { "/root/preseed/slapd.preseed":
-    command  => "PASSWORD=`cat /root/.passwd/ldap/admin` && sed 's/CHANGEME/'\$PASSWORD'/g' /root/preseed/slapd.preseed.temp > /root/preseed/slapd.preseed && touch /root/preseed/slapd.preseed.ok",
-    provider => 'shell',
-    creates  => "/root/preseed/slapd.preseed.ok",
-    path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
-    require  => File['/root/preseed/slapd.preseed.temp'],
   }
 
   package { $ldap::params::ldap_package_name:
     ensure       => installed,
     responsefile => "/root/preseed/slapd.preseed",
-    require  => Exec["/root/preseed/slapd.preseed"],
+    require      => File["/root/preseed/slapd.preseed"],
   }
 }
