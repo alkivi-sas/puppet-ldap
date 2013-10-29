@@ -56,8 +56,8 @@ class { 'ldap::smbldap':
   idmapdn     => 'idmap',
 }
 ```
-
 This will install smbldap tools and create default configuration, and populate your ldap directory with what is needed for domain control
+To obtain the sid, you can use net getlocalsid
 
 
 ### PAM and NSS support
@@ -97,6 +97,7 @@ ldap::user{ 'toto':
  lastName     => 'Awesome',
  create_local => false,
 }
+```
 
 ## Limitations
 
