@@ -1,5 +1,12 @@
 class ldap::samba(
+  $motd = true,
 ) {
+
+  if($motd)
+  {
+    motd::register{'LDAP samba support': }
+  }
+
   File {
     ensure => present,
     owner  => 'root',
@@ -41,7 +48,7 @@ class ldap::samba(
   }
 
   exec { 'apply-samba-scheme':
-    command => '/bin/cp /etc/ldap/samba-conf/slapd.d/cn=config/cn=schema/cn={4}samba.ldif /etc/ldap/slapd.d/cn=config/cn=schema/ && chown openldap: /etc/ldap/slapd.d/cn=config/cn=schema/cn={4}samba.ldif && /etc/init.d/slapd/restart',
+    command => '/bin/cp /etc/ldap/samba-conf/slapd.d/cn=config/cn=schema/cn={4}samba.ldif /etc/ldap/slapd.d/cn=config/cn=schema/ && chown openldap: /etc/ldap/slapd.d/cn=config/cn=schema/cn={4}samba.ldif && /etc/init.d/slapd restart',
     creates => '/etc/ldap/slapd.d/cn=config/cn=schema/cn={4}samba.ldif',
     notify  => Service['slapd'],
     require => Exec['generate-samba-scheme'],

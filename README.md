@@ -9,11 +9,12 @@ Samba utilisation is possible using special parameters
 
 ```puppet
 class { ldap: 
+  uri          => 'ldap.alkivi.fr',
+  base         => 'dc=alkivi,dc=fr',
   organization => 'Alkivi SAS',
   commonname   => 'alkivi',
   domain_name  => 'alkivi.fr',
-  master       => true,
-  samba        => false,
+  ssl          => true,
 }
 ```
 This will do the typical install, configure and service management.
@@ -24,23 +25,78 @@ This will do the typical install, configure and service management.
 
 ```puppet
 class { ldap: 
-  uri          => 'ldap2.alkivi.fr',
-  base         => 'dc=alkivi,dc=fr',
   organization => 'Alkivi SAS',
   commonname   => 'alkivi',
   domain_name  => 'alkivi.fr',
-  slave        => true,
-  masterNode   => 'ldap.alkivi.fr',
-  samba        => false,
+  uri          => 'ldap.alkivi.fr',
+  base         => 'dc=alkivi,dc=fr',
+  ssl          => true,
+  ssldir       => '/etc/ssl/ldap',
+  sslcert      => 'alkivi-ldap',
+  backend      => 'HDB',
+  motd         => true,
+  firewall     => true,
 }
-
-
 ```
 
+### Samba support
+
+```puppet
+class { 'ldap::samba': }
+class { 'ldap::smbldap':
+  sid         => 'S-1-5-21-4095410810-3205272473-3842645657',
+  sambaDomain => 'home',
+  readbinddn  => 'cn=admin,dc=home',
+  writebinddn => 'cn=admin,dc=home',
+  mailDomain  => 'alkivi.fr',
+  suffix      => 'dc=home',
+  usersdn     => 'people',
+  computersdn => 'computers',
+  groupsdn    => 'groups',
+  idmapdn     => 'idmap',
+}
+```
+
+This will install smbldap tools and create default configuration, and populate your ldap directory with what is needed for domain control
+
+
+### PAM and NSS support
+```puppet
+class { 'ldap::pam':
+  base        => 'dc=home',
+  base_passwd => 'ou=people',
+  base_shadow => 'ou=people',
+  base_group  => 'ou=groups',
+}
+
+class { 'ldap::nss':
+  base        => 'dc=home',
+  base_passwd => 'ou=people',
+  base_shadow => 'ou=people',
+  base_group  => 'ou=groups',
+}
+```
 
 ### Host configuration
 
-TODO
+You have two type of host, basic one, or samba one according to which classes you want to include. Samba user is added with smbldap-tools while basic user is not.
+
+```puppet
+ldap::sambauser{ 'toto':
+ email        => 'toto@alkivi.fr',
+ uname        => 'toto',
+ firstName    => 'Toto',
+ lastName     => 'Awesome',
+ create_local => false,
+}
+
+ldap::user{ 'toto':
+ email        => 'toto@alkivi.fr',
+ uname        => 'toto',
+ firstName    => 'Toto',
+ lastName     => 'Awesome',
+ create_local => false,
+}
 
 ## Limitations
 

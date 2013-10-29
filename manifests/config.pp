@@ -8,10 +8,13 @@ class ldap::config () {
     notify => Service[$ldap::params::ldap_service_name],
   }
 
-  file { '/etc/iptables.d/22-ldap.rules':
-    content => template('ldap/iptable.conf.erb'),
-    notify  => Service['alkivi-iptables'],
-    require => Package['alkivi-iptables'],
+  if($ldap::firewall)
+  {
+    file { '/etc/iptables.d/22-ldap.rules':
+      content => template('ldap/iptable.conf.erb'),
+      notify  => Service['alkivi-iptables'],
+      require => Package['alkivi-iptables'],
+    }
   }
 
   file { '/etc/ldap/ldap.conf':
@@ -136,41 +139,41 @@ class ldap::config () {
 
 
   # TODO : sync special stuff ...
-  if($ldap::master)
-  {
-    file { '/etc/ldap/alkivi-conf/synchronisator.ldif':
-      content => template('ldap/synchronisator.ldif.erb'),
-      require => File['/etc/ldap/alkivi-conf'],
-    }
+  #if($ldap::master)
+  #{
+  #  file { '/etc/ldap/alkivi-conf/synchronisator.ldif':
+  #    content => template('ldap/synchronisator.ldif.erb'),
+  #    require => File['/etc/ldap/alkivi-conf'],
+  #  }
 
-    file { '/etc/ldap/alkivi-conf/provider.ldif':
-      content => template('ldap/provider.ldif.erb'),
-      require => File['/etc/ldap/alkivi-conf'],
-    }
+  #  file { '/etc/ldap/alkivi-conf/provider.ldif':
+  #    content => template('ldap/provider.ldif.erb'),
+  #    require => File['/etc/ldap/alkivi-conf'],
+  #  }
 
-    file { '/var/lib/ldap/accesslog':
-      ensure => directory,
-      owner  => 'openldap',
-      group  => 'openldap',
-    }
+  #  file { '/var/lib/ldap/accesslog':
+  #    ensure => directory,
+  #    owner  => 'openldap',
+  #    group  => 'openldap',
+  #  }
 
-    exec { 'copy_DB_CONFIG':
-      command  => 'cp /var/lib/ldap/DB_CONFIG /var/lib/ldap/accesslog',
-      provider => 'shell',
-      path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
-      creates  => '/var/lib/ldap/accesslog/DB_CONFIG',
-    }
-  }
+  #  exec { 'copy_DB_CONFIG':
+  #    command  => 'cp /var/lib/ldap/DB_CONFIG /var/lib/ldap/accesslog',
+  #    provider => 'shell',
+  #    path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
+  #    creates  => '/var/lib/ldap/accesslog/DB_CONFIG',
+  #  }
+  #}
 
-  if($ldap::slave)
-  {
-    validate_string($ldap::masterNode)
+  #if($ldap::slave)
+  #{
+  #  validate_string($ldap::masterNode)
 
-    file { '/etc/ldap/alkivi-conf/consumer.ldif':
-      content => template('ldap/consumer.ldif.erb'),
-      require => File['/etc/ldap/alkivi-conf'],
-    }
-  }
+  #  file { '/etc/ldap/alkivi-conf/consumer.ldif':
+  #    content => template('ldap/consumer.ldif.erb'),
+  #    require => File['/etc/ldap/alkivi-conf'],
+  #  }
+  #}
 
   if defined(Class['rsyslog'])
   {

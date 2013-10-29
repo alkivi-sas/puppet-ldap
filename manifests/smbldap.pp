@@ -1,5 +1,5 @@
 class ldap::smbldap(
-  $sid                        = '',
+  $sid,
   $sambaDomain                = 'ALKIVI',
   $slaveLDAP                  = '127.0.0.1',
   $slavePort                  = 389,
@@ -45,15 +45,23 @@ class ldap::smbldap(
 ) {
 
   File {
-    ensure => present,
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0640',
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0640',
+    require => Package['smbldap-tools'],
   }
 
   Package {
     ensure => installed,
   }
+
+  validate_string($sid)
+  validate_string($sambaDomainName)
+  validate_string($readbinddn)
+  validate_string($writebinddn)
+  validate_string($mailDomain)
+  validate_string($suffix)
 
   $package_name = 'smbldap-tools'
 
@@ -64,7 +72,6 @@ class ldap::smbldap(
   file { '/usr/sbin/smbldap-useradd':
     source  => 'puppet:///modules/ldap/smbldap-useradd',
     mode    => '0755',
-    require => Package['smbldap-tools'],
   }
 
 
@@ -72,7 +79,10 @@ class ldap::smbldap(
     content => template('ldap/smbldap.conf.erb')
   }
 
-  file { '/etc/smbldap-tools/smbldap_bind.conf.temp':
+  # TODO : make this better ?
+  $password = alkivi_password('admin', 'ldap')
+
+  file { '/etc/smbldap-tools/smbldap_bind.conf':
     content => template('ldap/smbldap_bind.conf.erb'),
     mode    => '0600',
   }
@@ -84,7 +94,7 @@ $PASSWORD
 EOF',
     provider => 'shell',
     path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
-    require  => File['/etc/smbldap-tools/smbldap.conf', '/etc/smbldap-tools/smbldap_bind.conf.temp', '/usr/bin/ldap-helper', '/usr/sbin/smbldap-useradd' ],
+    require  => File['/etc/smbldap-tools/smbldap.conf', '/etc/smbldap-tools/smbldap_bind.conf', '/usr/bin/ldap-helper', '/usr/sbin/smbldap-useradd' ],
     unless   => "ldap-helper --command search --method ldapi --args '-b ${suffix}' | grep -q 'dn: sambaDomainName='",
   }
 
