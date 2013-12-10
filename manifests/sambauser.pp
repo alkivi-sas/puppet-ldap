@@ -23,14 +23,15 @@ define ldap::sambauser (
   }
 
   # Store password
-  alkivi_base::passwd{ $uname:
+  alkivi_base::passwd{ "ldap-${uname}":
+    file => $uname,
     type => 'ldap',
   }
 
   exec { "create-user-${uname}":
     command => "/root/alkivi-scripts/ldap-add-sambaUser -f ${firstName} -l ${lastName} -m ${email} -u ${uname} ${create_command}",
     path    => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/', '/usr/sbin'],
-    require => [ File['/root/alkivi-scripts/ldap-helper', '/usr/sbin/smbldap-useradd', '/root/alkivi-scripts/ldap-add-sambaUser'], Exec['populate-ldap'], Alkivi_base::Passwd[$uname] ],
+    require => [ File['/root/alkivi-scripts/ldap-helper', '/usr/sbin/smbldap-useradd', '/root/alkivi-scripts/ldap-add-sambaUser'], Exec['populate-ldap'], Alkivi_base::Passwd["ldap-${uname}"] ],
     unless  => "slapcat | grep -q 'dn: uid=${uname},'",
   }
 
