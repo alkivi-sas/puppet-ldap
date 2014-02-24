@@ -14,6 +14,15 @@ class ldap::nss(
   $nss_base_shadow = "${base_shadow},${base}?sub"
   $nss_base_group  = "${base_group},${base}?sub"
 
+  if(is_array($uri)) 
+  {
+    $real_uri = join($uri, ' ')
+  }
+  else
+  {
+    $real_uri = $uri
+  }
+
   File {
     ensure  => present,
     owner   => 'root',
@@ -31,12 +40,9 @@ class ldap::nss(
     content => template('ldap/libnss-ldap.conf.erb')
   }
 
-  exec { 'libnss-ldap.secret':
-    command  => '/bin/cp /root/.passwd/ldap/admin /etc/libnss-ldap.secret && chmod 600 /etc/libnss-ldap.secret',
-    creates  => '/etc/libnss-ldap.secret',
-    provider => 'shell',
-    path     => ['/bin', '/sbin', '/usr/bin'],
-    require  => Package[$package_name],
+  file { '/etc/libnss-ldap.secret':
+    content => alkivi_password('admin', 'ldap'),
+    mode    => '0600',
   }
 
   exec { 'update-nsswitch':

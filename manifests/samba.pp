@@ -19,6 +19,7 @@ class ldap::samba(
   }
 
   package { 'samba-doc': }
+  package { 'slapd-smbk5pwd': }
 
   exec { 'copy-samba-scheme':
     command => '/bin/zcat /usr/share/doc/samba-doc/examples/LDAP/samba.schema.gz > /etc/ldap/schema/samba.schema',
@@ -50,7 +51,6 @@ class ldap::samba(
   exec { 'apply-samba-scheme':
     command => '/bin/cp /etc/ldap/samba-conf/slapd.d/cn=config/cn=schema/cn={4}samba.ldif /etc/ldap/slapd.d/cn=config/cn=schema/ && chown openldap: /etc/ldap/slapd.d/cn=config/cn=schema/cn={4}samba.ldif && /etc/init.d/slapd restart',
     creates => '/etc/ldap/slapd.d/cn=config/cn=schema/cn={4}samba.ldif',
-    notify  => Service['slapd'],
     require => Exec['generate-samba-scheme'],
   }
 
@@ -67,5 +67,34 @@ class ldap::samba(
     path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
     require  => [ File['/root/alkivi-scripts/ldap-helper', '/etc/ldap/alkivi-conf/olcDbSambaIndex.ldif'], Exec['/etc/ldap/alkivi-conf/olcDbIndex.ldif', 'apply-samba-scheme'], ],
   }
+
+  # Now load smbk5pwd
+  file { '/etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif':
+    source  => 'puppet:///modules/ldap/olcSmbk5pwdAddModule.ldif',
+    require => File['/etc/ldap/alkivi-conf'],
+  }
+
+  exec { '/etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif':
+    command  => "/root/alkivi-scripts/ldap-helper --command modify --method ldapi --file /etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif && touch /etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif.ok",
+    provider => 'shell',
+    creates  => "/etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif.ok",
+    path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
+    require  => [ File['/root/alkivi-scripts/ldap-helper', '/etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif'], Exec['/etc/ldap/alkivi-conf/olcDbIndex.ldif', 'apply-samba-scheme'], ],
+  }
+
+  # Load entry for smbk5pwd
+  file { '/etc/ldap/alkivi-conf/olcSmbk5pwd.ldif':
+    source  => 'puppet:///modules/ldap/olcSmbk5pwd.ldif',
+    require => File['/etc/ldap/alkivi-conf'],
+  }
+
+  exec { '/etc/ldap/alkivi-conf/olcSmbk5pwd.ldif':
+    command  => "/root/alkivi-scripts/ldap-helper --command add --method ldapi --file /etc/ldap/alkivi-conf/olcSmbk5pwd.ldif && touch /etc/ldap/alkivi-conf/olcSmbk5pwd.ldif.ok",
+    provider => 'shell',
+    creates  => "/etc/ldap/alkivi-conf/olcSmbk5pwd.ldif.ok",
+    path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
+    require  => [ File['/root/alkivi-scripts/ldap-helper', '/etc/ldap/alkivi-conf/olcSmbk5pwd.ldif'], Exec['/etc/ldap/alkivi-conf/olcDbIndex.ldif', 'apply-samba-scheme' , '/etc/ldap/alkivi-conf/olcSmbk5pwdAddModule.ldif'], ],
+  }
+
 
 }

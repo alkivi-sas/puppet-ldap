@@ -17,6 +17,6 @@ URI <%= @real_uri %>
 
 <% if @ssl %>
 TLS_CACERT <%= @ssldir %>/<%= @sslcert %>.crt
-TLSVerifyClient never
-TLS_REQCERT never
+TLSVerifyClient <%= @tls_verify_client %>
+TLS_REQCERT <%= @tls_reqcert %>
 <% end %>

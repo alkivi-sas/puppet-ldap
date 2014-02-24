@@ -1,5 +1,5 @@
 *filter
 
--A INPUT -p tcp --dport <%= @port %> -j ACCEPT -m comment --comment "ldap <%= name %>"
+-A INPUT -p tcp --dport <%= @port %> -j ACCEPT -m comment --comment "ldap <%= @name %>"
 
 COMMIT

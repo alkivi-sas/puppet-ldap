@@ -32,7 +32,7 @@ define ldap::user (
   }
 
   exec { "create-user-${uname}":
-    command  => "/root/alkivi-scripts/ldap-add-user -f ${firstName} -l ${lastName} -m ${email} -u ${uname} -g ${group} ${create_command}",
+    command  => "/root/alkivi-scripts/ldap-add-user -f \"${firstName}\" -l \"${lastName}\" -m ${email} -u ${uname} -g \"${group}\" ${create_command}",
     unless   => "ldapsearch -x \"objectclass=posixAccount\" uid | grep -v ^dn | grep -v ^$ | sed -e 's/uid: //g' | grep -v \\# | grep -v : | grep ^${uname}$",
     path     => ['/bin', '/sbin', '/usr/bin', '/root/alkivi-scripts/'],
     require => [ File['/root/alkivi-scripts/ldap-helper', '/usr/sbin/smbldap-useradd', '/root/alkivi-scripts/ldap-add-user'], Exec['populate-ldap'], Alkivi_base::Passwd["ldap-${uname}"] ],

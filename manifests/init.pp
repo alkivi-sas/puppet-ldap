@@ -10,6 +10,8 @@ class ldap (
   $backend      = 'HDB',
   $motd         = true,
   $firewall     = true,
+  $tls_verify_client = 'never',
+  $tls_reqcert  = 'never',
 
 ) {
 
