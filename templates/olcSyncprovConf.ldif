@@ -1,0 +1,38 @@
+dn: cn=config
+changetype: modify
+add: olcServerId
+olcServerId: 1
+
+dn: olcDatabase={1}hdb,cn=config
+changetype: modify
+add: olcSyncrepl
+olcsyncrepl: {0}rid=000 
+  provider=ldap://ldap2.example.com
+  type=refreshAndPersist
+  retry="5 5 300 +" 
+  searchbase="dc=example,dc=com"
+  attrs="*,+"
+  bindmethod=simple
+  binddn="cn=admin,ou=people,dc=example,dc=com"
+  credentials=dirtysecret
+olcsyncrepl: {1}rid=001
+  provider=ldap://ldap3.example.com
+  type=refreshAndPersist
+  retry="5 5 300 +" 
+  searchbase="dc=example,dc=com"
+  attrs="*,+"
+  bindmethod=simple
+  binddn="cn=admin,ou=people,dc=example,dc=com"
+  credentials=dirtysecret
+-
+add: olcAccess
+olcAccess: {x}to *
+  by dn.base="cn=admin,ou=people,dc=example,dc=com" read
+  by * break
+-
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+olcDbIndex: entryCSN eq
+-
+replace: olcMirrorMode
+olcMirrorMode: TRUE
