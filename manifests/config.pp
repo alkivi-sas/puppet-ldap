@@ -6,6 +6,7 @@ class ldap::config (
   $sslcert           = $ldap::sslcert,
   $tls_verify_client = $ldap::tls_verify_client,
   $tls_reqcert       = $ldap::tls_reqcert,
+  $port              = $ldap::port,
 ) {
 
   File {
