@@ -1,4 +1,8 @@
-class ldap::install () {
+class ldap::install (
+  $password    = $ldap::password,
+  $domain_name = $ldap::domain_name,
+  $backend     = $ldap::backend,
+) {
   File {
     ensure => present,
     owner  => 'root',
