@@ -1,4 +1,12 @@
-class ldap::config () {
+class ldap::config (
+  $base              = $ldap::base,
+  $real_uri          = $ldap::real_uri,
+  $ssl               = $ldap::ssl,
+  $ssldir            = $ldap::ssldir,
+  $sslcert           = $ldap::sslcert,
+  $tls_verify_client = $ldap::tls_verify_client,
+  $tls_reqcert       = $ldap::tls_reqcert,
+) {
 
   File {
     ensure => present,
