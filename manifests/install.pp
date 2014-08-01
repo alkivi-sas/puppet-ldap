@@ -17,7 +17,6 @@ class ldap::install (
     }
   }
 
-  $password = alkivi_password('admin', 'ldap')
 
   file { "/root/preseed/slapd.preseed":
     content => template('ldap/preseed.erb'),

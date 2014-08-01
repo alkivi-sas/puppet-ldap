@@ -2,6 +2,7 @@ class ldap (
   $organization,
   $commonname,
   $domain_name,
+  $password     = alkivi_password('admin', 'ldap'),
   $uri          = 'ldap.alkivi.fr',
   $base         = 'dc=alkivi,dc=fr',
   $ssl          = true,
