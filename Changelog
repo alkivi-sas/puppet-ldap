@@ -3,3 +3,5 @@
 2013-10-29
 * remove host definition from global config
 * remove samba nss and pam definition from global config
+2014-11-24
+* Remove unwanted dependencies
